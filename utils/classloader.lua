@@ -148,8 +148,7 @@ end
 
 function ClassLoader.changeLoadedClass()
     Globals.CurLoadedClass = mq.TLO.Me.Class.ShortName()
-    Logger.log_info("\ayPersona class swap detected! \awLoading settings for \ag%s.", mq.TLO.Me.Class())
-    ClassLoader.reloadConfig()
+    Logger.log_info("Current class is: %s", mq.TLO.Me.Class.ShortName())
 end
 
 function ClassLoader.reloadConfig()

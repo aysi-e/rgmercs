@@ -8,7 +8,7 @@ local Globals    = require("utils.globals")
 local Logger     = require("utils.logger")
 local Modules    = require("utils.modules")
 local Strings    = require("utils.strings")
-
+local Tables      = require("utils.tables")
 local Rotation   = { _version = '1.0', _name = "Rotation", _author = 'Derple', }
 Rotation.__index = Rotation
 
@@ -66,12 +66,11 @@ end
 function Rotation.GetBestSpell(spellList, alreadyResolvedMap)
     local highestLevel = 0
     local selectedSpell = nil
-
+    Logger.log_info('GetBestSpell')
     for _, spellName in ipairs(spellList or {}) do
         local spell = mq.TLO.Spell(spellName)
         if spell() ~= nil then
-            --Logger.log_debug("Found %s level(%d) rank(%s)", s, spell.Level(), spell.RankName())
-            if spell.Level() <= mq.TLO.Me.Level() then
+            Logger.log_debug("Found %s level(%d) rank(%s)", spell.Name(), spell.Level(), spell.RankName())
                 if mq.TLO.Me.Book(spell.RankName.Name())() or mq.TLO.Me.CombatAbility(spell.RankName.Name())() then
                     if spell.Level() > highestLevel then
                         -- make sure we havent already found this one.
@@ -93,15 +92,14 @@ function Rotation.GetBestSpell(spellList, alreadyResolvedMap)
                     --         mq.TLO.Me.CleanName(), spellName,
                     --         spell.RankName.Name(), spell.Level()))
                 end
-            end
         end -- end if spell nil check
     end
 
     if selectedSpell then
-        Logger.log_debug("\agFound\ax %s level(%d) rank(%s)", selectedSpell.BaseName(), selectedSpell.Level(),
+        Logger.log_info("\agFound\ax %s level(%d) rank(%s)", selectedSpell.BaseName(), selectedSpell.Level(),
             selectedSpell.RankName())
     else
-        Logger.log_debug("\arNo spell found for slot!")
+        Logger.log_info("\arNo spell found for slot!")
     end
 
     return selectedSpell
@@ -465,6 +463,15 @@ function Rotation.ApplyEntryOrder(entryList, savedOrder)
     for i, k in ipairs(keyed) do entryList[i] = k.entry end
 end
 
+function Rotation.printTable(table)
+    if # table == 0 then
+        Logger.log_info("table is empty")
+    end
+    for key, value in pairs(table) do
+        Logger.log_info("%s: %s", key, value)
+    end
+end
+
 --- Builds and returns a resolvedActionMap by calling GetBestItem, GetBestSpell,
 --- and GetBestAA for each entry in itemSets, abilitySets, and aaSets.
 ---@param itemSets table Map of set name → array of item names.
@@ -472,6 +479,8 @@ end
 ---@param aaSets table|nil Map of set name → array of AA names.
 ---@return table Map of set name → resolved spell/item/AA.
 function Rotation.ResolveActions(itemSets, abilitySets, aaSets)
+    Logger.log_info("abilitySets")
+    Tables.PrintTable(abilitySets)
     local resolvedActionMap = {}
 
     -- Map AbilitySet Items and Load Them
@@ -718,12 +727,10 @@ function Rotation.FindMissingSpells(varName, spellList, alreadyMissingSpells, hi
         local spell = mq.TLO.Spell(spellName)
         if spell() ~= nil then
             --Logger.log_debug("Found %s level(%d) rank(%s)", s, spell.Level(), spell.RankName())
-            if spell.Level() <= mq.TLO.Me.Level() then
-                if not mq.TLO.Me.Book(spell.RankName.Name())() and not mq.TLO.Me.CombatAbility(spell.RankName.Name())() then
-                    table.insert(tmpTable, { selectedSpellData = { name = varName, }, missing = true, spell = spell, })
-                else
-                    table.insert(tmpTable, { selectedSpellData = { name = varName, }, missing = false, spell = spell, })
-                end
+            if not mq.TLO.Me.Book(spell.RankName.Name())() and not mq.TLO.Me.CombatAbility(spell.RankName.Name())() then
+                table.insert(tmpTable, { selectedSpellData = { name = varName, }, missing = true, spell = spell, })
+            else
+                table.insert(tmpTable, { selectedSpellData = { name = varName, }, missing = false, spell = spell, })
             end
         end -- end if spell nil check
     end

@@ -610,6 +610,7 @@ end
 ---@param action string Action key from the class rotation table.
 ---@return any The resolved action entry, or nil if not found.
 function Core.GetResolvedActionMapItem(action)
+    Logger.log_info("Attempting to resolve action: %s", action)
     return Modules:ExecModule("Class", "GetResolvedActionMapItem", action)
 end
 

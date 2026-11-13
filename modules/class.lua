@@ -661,7 +661,11 @@ end
 
 function Module:GetResolvedActionMapItem(item)
     if self.TempSettings.ResolvingActions then return nil end
-    return self.ResolvedActionMap[item]
+    Logger.log_info('GetResolvedActionMapItem: %s', item)
+    Tables.PrintTable(self.ResolvedActionMap)
+    local result = self.ResolvedActionMap[item]
+    Logger.log_info('GetResolvedActionMapItem: %s -> %s', item, result)
+    return result
 end
 
 function Module:RescanLoadout()
@@ -935,6 +939,7 @@ function Module:SetCombatMode(mode)
         self.TempSettings.ResolvingActions = false
 
         if self.ClassConfig.SpellList then
+            Tables.PrintTable(self.ClassConfig.SpellList)
             local forceRepack = self.TempSettings.ForceRepackGems or not self.TempSettings.CombatModeSet
             self.SpellLoadOut, self.LoadOutName = Rotation.SetSpellLoadOutByPriority(self, self.ClassConfig.SpellList, forceRepack)
             self.TempSettings.ForceRepackGems = false
@@ -954,6 +959,7 @@ function Module:SetCombatMode(mode)
 end
 
 function Module:ComputedLoadoutMatchesCurrent()
+    Logger.log_info("ComputedLoadoutMatchesCurrent")
     if not self.ClassConfig then return false end
     if not self.ClassConfig.SpellList then return self.ClassConfig.Spells == nil end
 

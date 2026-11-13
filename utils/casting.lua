@@ -13,6 +13,7 @@ local Movement     = require('utils.movement')
 local Strings      = require("utils.strings")
 local Tables       = require("utils.tables")
 local Targeting    = require("utils.targeting")
+local Compatibility = require("utils.compatibility")
 
 local Casting      = { _version = '2.1', _name = "Casting", _author = 'Derple, Algar', }
 Casting.__index    = Casting
@@ -1461,7 +1462,6 @@ end
 --- @return boolean Returns true if the spell is loaded, false otherwise.
 function Casting.SpellLoaded(spell)
     if not spell or not spell() then return false end
-
     return mq.TLO.Me.Gem(spell.RankName.Name())() ~= nil
 end
 
@@ -1501,7 +1501,8 @@ function Casting.MemorizeSpell(gem, spell, waitSpellReady, maxWait)
     local cmd                = string.format("/memspell %d \"%s\"", gem, spell)
 
     Logger.log_info("\atMemorizeSpell\aw():\ag Meming \aw%s in \agslot %d", spell, gem)
-    Core.DoCmd(cmd)
+    -- Core.DoCmd(cmd)
+    Compatibility.tryMem(gem, spell)
     local lastMemCmd = Globals.GetTimeMS()
 
     Casting.Memorizing = true
@@ -2834,6 +2835,12 @@ function Casting.WaitGlobalCoolDown(logPrefix)
         Events.DoEvents()
         Logger.log_verbose(logPrefix and logPrefix or "" .. "Waiting for Global Cooldown to be ready...")
     end
+end
+
+-- Get the current cooldown time, in seconds, for the specified alternate advancement ability.
+-- @param aaName string the name of the AA ability to check
+function Casting.GetAACooldown(aaName)
+    return mq.TLO.Me.AltAbilityTimer(aaName) * 6
 end
 
 --- Retrieves the name of the last cast result.

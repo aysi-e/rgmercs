@@ -303,7 +303,7 @@ function Targeting.GetAutoTargetAggroPct()
         return mq.TLO.Target.PctAggro() or 0
     end
 
-    local slotCount = mq.TLO.Me.XTargetSlots() or 0
+    local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
 
     for i = 1, slotCount do
         local xtSpawn = mq.TLO.Me.XTarget(i)
@@ -382,7 +382,7 @@ function Targeting.GetHighestAggroPct()
 
     local highestPct = target.PctAggro() or 0
 
-    local slotCount  = me.XTargetSlots() or 0
+    local slotCount  = (me.XTargetSlots() or 4) - 4
 
     for i = 1, slotCount do
         local xtSpawn = me.XTarget(i)
@@ -409,7 +409,7 @@ function Targeting.IHaveAggro(pct)
         return true
     end
 
-    local slotCount = me.XTargetSlots() or 0
+    local slotCount = (me.XTargetSlots() or 4) - 4
 
     for i = 1, slotCount do
         local xtSpawn = me.XTarget(i)
@@ -428,7 +428,7 @@ function Targeting.TankingXTNamed()
     end
     Targeting.TankingNamedCheckTime = Globals.GetTimeSeconds()
     Targeting.TankingNamedFound = false
-    local slotCount = mq.TLO.Me.XTargetSlots() or 0
+    local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
     for i = 1, slotCount do
         local xt = mq.TLO.Me.XTarget(i)
         -- check for exactly 100% to help ensure the mob is targeting us, over 100% can indicate another is still targeted
@@ -450,7 +450,7 @@ function Targeting.HasXTNamed()
     end
     Targeting.XTNamedCheckTime = Globals.GetTimeSeconds()
     Targeting.XTNamedFound = false
-    local slotCount = mq.TLO.Me.XTargetSlots() or 0
+    local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
     for i = 1, slotCount do
         local xt = mq.TLO.Me.XTarget(i)
         if Targeting.IsXTHater(xt) and Targeting.IsNamed(xt) then
@@ -465,7 +465,7 @@ end
 ---@param printDebug boolean? If true, logs each hater found.
 ---@return table Set of hater spawn IDs.
 function Targeting.GetXTHaterIDsSet(printDebug)
-    local slotCount = mq.TLO.Me.XTargetSlots() or 0
+    local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
     local uniqHaters = Set.new({})
 
     for i = 1, slotCount do
@@ -500,7 +500,7 @@ end
 ---@return boolean True if at least count unique haters are on XTarget.
 function Targeting.HasXTHaters(count)
     count = count or 1
-    local slotCount = mq.TLO.Me.XTargetSlots() or 0
+    local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
     local seenHaters = Set.new({})
     local uniqHaters = 0
 
@@ -530,7 +530,7 @@ end
 ---@param range number Distance in units to check against.
 ---@return boolean True if a hater is within range.
 function Targeting.XTHaterInRange(range)
-    local slotCount = mq.TLO.Me.XTargetSlots() or 0
+    local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
 
     for i = 1, slotCount do
         local xtarg = mq.TLO.Me.XTarget(i)
@@ -565,7 +565,7 @@ end
 ---@return boolean True if the spawn is found in XTarget (and meets autoHater if set).
 function Targeting.IsSpawnXTHater(spawnId, autoHater)
     if (spawnId or 0) <= 0 then return false end
-    local slotCount = mq.TLO.Me.XTargetSlots() or 0
+    local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
 
     for i = 1, slotCount do
         local xtarg = mq.TLO.Me.XTarget(i)
@@ -653,7 +653,7 @@ function Targeting.RefreshWatchedXTs()
     for name in pairs(needSlot) do
         local claimSlot, freeSlot = nil, nil
 
-        for slot = mq.TLO.Me.XTargetSlots() or 0, 2, -1 do
+        for slot = (mq.TLO.Me.XTargetSlots() or 4) - 4, 2, -1 do
             local xtarg = mq.TLO.Me.XTarget(slot)
             if not Targeting.WatchedXTs[slot] then
                 if (xtarg.TargetType() or "") == "Specific PC" and (xtarg.Name() or ""):lower() == name:lower() then
@@ -696,7 +696,7 @@ function Targeting.ClearStuckXTargets()
     if (Globals.GetTimeMS() - (Globals.LastCombatTime or 0)) < 1000 then return end
     if (Globals.GetTimeSeconds() - Targeting.XTClearTime) < 10 then return end
 
-    local slotCount       = mq.TLO.Me.XTargetSlots() or 20
+    local slotCount       = (mq.TLO.Me.XTargetSlots() or 20) - 4
     local stuckSlots      = {}
     local idSnap          = {}
     local populatedBefore = {}

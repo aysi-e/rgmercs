@@ -476,7 +476,7 @@ function Combat.MATargetScan(radius, zradius)
     local fallbackTarget = { hp = initHp, id = 0, name = "None", }
     local aggroScan      = Config:GetSetting("MAAggroScan")
     local myLevel        = mq.TLO.Me.Level() or 0
-    local slotCount      = mq.TLO.Me.XTargetSlots() or 0
+    local slotCount      = (mq.TLO.Me.XTargetSlots() or 4) - 4
 
     for i = 1, slotCount do
         local result = Combat.ProcessXTarget(mq.TLO.Me.XTarget(i), radius, namedPref, hpPref, immediate, primaryTarget, fallbackTarget, aggroScan, myLevel)
@@ -514,7 +514,7 @@ function Combat.TankAggroScan()
         return
     end
 
-    local slotCount = mq.TLO.Me.XTargetSlots() or 0
+    local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
     local assistRange = Config:GetSetting('AssistRange')
 
     for i = 1, slotCount do
@@ -1273,7 +1273,7 @@ end
 ---@param minHPs number The minimum HP threshold to consider.
 ---@return number The spawn id with the worst health condition that meets the criteria.
 function Combat.FindWorstHurtXT(minHPs)
-    local slotCount = mq.TLO.Me.XTargetSlots() or 0
+    local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
     local worstId = 0
     local worstPct = minHPs
 
@@ -1406,7 +1406,7 @@ function Combat.AETauntCheck(printDebug)
     local haterCount = 0
     local tauntCount = 0
     local me = mq.TLO.Me
-    local slotCount = me.XTargetSlots() or 0
+    local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
 
     for i = 1, slotCount do
         local xtarg = me.XTarget(i)

@@ -327,7 +327,7 @@ end
 function Movement:DetectMobBehind()
     local me = mq.TLO.Me
     local myHeading = me.Heading.DegreesCCW() or 0
-    local slotCount = me.XTargetSlots() or 0
+    local slotCount = (me.XTargetSlots() or 4) - 4
     local nearest = nil
     local nearestDistSq = math.huge
 

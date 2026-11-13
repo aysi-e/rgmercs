@@ -1710,7 +1710,7 @@ function Ui.RenderForceTargetList(showPopout)
         function(sort_specs)
             Ui.TempSettings.SortedXT = {}
             Ui.TempSettings.SortedXTIDToSlot = {}
-            local slotCount = mq.TLO.Me.XTargetSlots() or 0
+            local slotCount = (mq.TLO.Me.XTargetSlots() or 4) - 4
             for i = 1, slotCount do
                 local xtarg = mq.TLO.Me.XTarget(i)
                 local xtargID = xtarg and xtarg.ID() or 0
