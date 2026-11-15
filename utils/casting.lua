@@ -1493,47 +1493,64 @@ function Casting.MemorizeSpell(gem, spell, waitSpellReady, maxWait)
         Logger.log_warning("\atMemorizeSpell\aw():\ar %s was not memorized in slot %d due to aggro! The loadout may need manual rescan after combat.", spell, gem)
         return false, false
     end
-    local aggressiveMem      = Config:GetSetting('AggressivelyMemorizeSpells')
-    local aggressiveMemTimer = Config:GetSetting('AggressivelyMemorizeTimer') * 1000
-
-    -- Algarnote: Not sure where to put this, but there is a very edge-case bug that can cause us to memorize a lower level spell of the same name, since we can't use ID.
-    -- /memspell (MQ) and /memspellslot (EQ) will memorize the first available by book position, which is generally the low level spell. Delete old spell, or swap positions in book to resolve... or add ID to /memspell
-    local cmd                = string.format("/memspell %d \"%s\"", gem, spell)
 
     Logger.log_info("\atMemorizeSpell\aw():\ag Meming \aw%s in \agslot %d", spell, gem)
-    -- Core.DoCmd(cmd)
-    Compatibility.tryMem(gem, spell)
-    local lastMemCmd = Globals.GetTimeMS()
-
     Casting.Memorizing = true
 
     local interrupted = false
     local permanent = false
     local startMem = Globals.GetTimeMS()
-    while (me.Gem(gem)() ~= mq.TLO.Spell(spell).Name() or (waitSpellReady and not me.SpellReady(gem)())) and ((Globals.GetTimeMS() - startMem) < maxWait) do
-        Logger.log_debug("\atMemorizeSpell\aw():\ay Waiting for '%s' to load in slot %d'...", spell, gem)
+    local isInterrupted = function ()
         if ((me.CombatState() or ""):lower() == "combat" and Targeting.IHaveAggro(100)) or me.Casting() or me.Moving() or mq.TLO.Stick.Active() or mq.TLO.Navigation.Active() or mq.TLO.MoveTo.Moving() then
             Logger.log_debug(
                 "\atMemorizeSpell\aw():\ay I was interrupted while waiting for spell '%s' to load in slot %d'! Aborting. CombatState(%s) Casting(%s) Moving(%s) Stick(%s) Nav(%s) MoveTo(%s))",
                 spell, gem, me.CombatState(), me.Casting() or "None", Strings.BoolToColorString(me.Moving()), Strings.BoolToColorString(mq.TLO.Stick.Active()),
                 Strings.BoolToColorString(mq.TLO.Navigation.Active()), Strings.BoolToColorString(mq.TLO.MoveTo.Moving()))
-            interrupted = true
-            break
+            return true
         end
-        if not me.Book(spell)() then
-            Logger.log_debug("\atMemorizeSpell\aw():\ar I was trying to memorize %s as my persona was changed, aborting.", spell)
-            permanent = true
-            break
-        end
+    end
 
-        if me.Gem(gem)() == nil and aggressiveMem and (Globals.GetTimeMS() - lastMemCmd) > aggressiveMemTimer then
-            Logger.log_debug(
-                "\atMemorizeSpell\aw():\ay AggressiveMemorize is enabled and it's been more than %ds since the last mem command and the gem slot is still empty, resending mem command for '%s' in slot %d.",
-                (Globals.GetTimeMS() - lastMemCmd) / 1000, spell, gem)
-            Core.DoCmd(cmd)
-            lastMemCmd = Globals.GetTimeMS()
-        end
+    -- make sure the gem is available
+    interrupted = not Compatibility.unmemGem(gem)
+    local spellName = mq.TLO.Spell(spell).Name()
+    local bookSlot = me.Book(spellName)()
+    local page = math.ceil(bookSlot / 8)
+    if not bookSlot then
+        return false, true
+    end
 
+    if mq.TLO.Me.Sitting() or mq.TLO.Me.Ducking() then
+        mq.cmd('/stand')
+        mq.delay(400)
+    end
+
+    -- open spellbook
+    local book = function() return mq.TLO.Window('SpellBookWnd') end
+    mq.cmd(string.format('/book %d', page));
+    local t = 0
+    while (not interrupted and not book().Open() and t < 2500 and ((Globals.GetTimeMS() - startMem) < maxWait)) do
+        mq.delay(100)
+        t = t + 100
+        interrupted = isInterrupted()
+        mq.doevents()
+        Events.DoEvents()
+    end
+
+    if not book().Open() then
+        Logger.log_error('Failed to memorize spell - could not open the spellbook.')
+        interrupted = true
+    end
+
+    -- 9. Pick up spell from book page and drop onto gem slot
+    Compatibility.clearCursor()
+    
+    mq.cmdf('/notify SpellBookWnd SBW_Spell%d leftmouseup', ((bookSlot - 1) % 8) + ((page + 1) % 2) * 8)
+    mq.delay(math.random(300, 500))
+    mq.cmdf('/notify CastSpellWnd CSPW_Spell%d leftmouseup', gem - 1)
+
+    while (not interrupted and me.Gem(gem)() ~= mq.TLO.Spell(spell).Name() or (waitSpellReady and not me.SpellReady(gem)())) and ((Globals.GetTimeMS() - startMem) < maxWait) do
+        --Logger.log_debug("\atMemorizeSpell\aw():\ay Waiting for '%s' to load in slot %d'...", spell, gem)
+        interrupted = isInterrupted()
         mq.delay(100)
         mq.doevents()
         Events.DoEvents()
@@ -1542,6 +1559,10 @@ function Casting.MemorizeSpell(gem, spell, waitSpellReady, maxWait)
     Logger.log_debug("\atMemorizeSpell\aw():\aw Finished waiting for '\at%s\aw' to load in slot \am%d\aw. Time taken: \ay%d\aws, maxWait(\ao%d\aws)",
         spell, gem, (Globals.GetTimeMS() - startMem) / 1000, maxWait / 1000)
 
+    -- 11. Close spellbook
+    if book().Open() then
+        mq.cmd('/notify SpellBookWnd SBW_DoneButton leftmouseup')
+    end
     Casting.Memorizing = false
 
     local loaded = me.Gem(gem)() == mq.TLO.Spell(spell).Name()
